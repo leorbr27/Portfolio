@@ -34,8 +34,8 @@ footer{border-top:1px solid var(--line);padding:30px 0 55px;display:flex;justify
 </div>
 <script>
 const user="leorbr27",excluded=["Portfolio"];
-const descriptions={Supermercado:"Aplicação web para registrar e comparar preços de produtos em supermercados.",MegaSenaAnalyzer:"Ferramenta de análise estatística e geração de jogos para a Mega-Sena.",corretores:"Sistema de briefing e gestão de informações para produção de vídeos imobiliários.",Gastos:"Aplicação web para organização e acompanhamento de gastos.",Praticagem:"Projeto de monitoramento e consulta de informações relacionadas à praticagem.",Organizacao_formatura:"Plataforma colaborativa para organizar decisões e participantes de uma formatura."};
-const labels={Supermercado:"Comparador de preços",MegaSenaAnalyzer:"Análise de loteria",corretores:"Vídeo imobiliário",Gastos:"Finanças pessoais",Praticagem:"Monitoramento",Organizacao_formatura:"Organização de eventos"};
+const descriptions={Trabalho:"Página de favoritos de trabalho, com links personalizáveis e organização por arrastar e soltar.",Supermercado:"Aplicação web para registrar e comparar preços de produtos em supermercados.",MegaSenaAnalyzer:"Ferramenta de análise estatística e geração de jogos para a Mega-Sena.",corretores:"Sistema de briefing e gestão de informações para produção de vídeos imobiliários.",Gastos:"Aplicação web para organização e acompanhamento de gastos.",Praticagem:"Projeto de monitoramento e consulta de informações relacionadas à praticagem.",Organizacao_formatura:"Plataforma colaborativa para organizar decisões e participantes de uma formatura."};
+const labels={Trabalho:"Favoritos de trabalho",Supermercado:"Comparador de preços",MegaSenaAnalyzer:"Análise de loteria",corretores:"Vídeo imobiliário",Gastos:"Finanças pessoais",Praticagem:"Monitoramento",Organizacao_formatura:"Organização de eventos"};
 const cfg=window.PORTFOLIO_CONFIG||{profilePhoto:"",projectImages:{}};
 function projectUrl(n){return "https://"+user+".github.io/"+encodeURIComponent(n)+"/"}
 function pretty(n){return labels[n]||n.replaceAll("_"," ")}
