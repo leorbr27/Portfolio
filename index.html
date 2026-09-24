@@ -17,7 +17,7 @@ header{padding:28px 0;border-bottom:1px solid var(--line);display:flex;justify-c
 footer{border-top:1px solid var(--line);padding:30px 0 55px;display:flex;justify-content:space-between;color:var(--muted);font-size:13px}.status{display:flex;align-items:center;gap:8px}.dot{width:7px;height:7px;background:#39a96b;border-radius:50%}.loading,.error{padding:70px 0;color:var(--muted)}
 @media(max-width:800px){.wrap{padding:0 20px}.nav{gap:14px}.nav a:nth-child(2){display:none}.hero{padding:70px 0 85px;grid-template-columns:1fr;gap:40px}.profile{justify-self:start;width:min(62vw,260px)}.intro{font-size:18px}.projects{grid-template-columns:1fr}.project,.project:nth-child(even){padding:20px 0;min-height:300px;border-left:0}.project:hover,.project:nth-child(even):hover{padding-left:0}.about{padding:90px 0}.about-grid{grid-template-columns:1fr;gap:25px}.about-text{font-size:32px}.about-photo,.about-placeholder{max-width:260px}footer{display:block}footer div+div{margin-top:14px}}
 </style>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script type="module" src="neon-client.js"></script>
 </head>
 <body>
 <div class="wrap">
@@ -32,38 +32,30 @@ footer{border-top:1px solid var(--line);padding:30px 0 55px;display:flex;justify
 </main>
 <footer><div>© <span id="year"></span> Leonardo Ribeiro</div><div class="status"><span class="dot"></span> Conteúdo atualizado pela área administrativa</div></footer>
 </div>
-<script>
-const SUPABASE_URL="https://lbehdmxfkakwygwoozyr.supabase.co";
-const SUPABASE_KEY="sb_publishable_wJXFi-54JwNO9RIm8NZU_Q_-9bt7S7h";
-const supabase=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+<script type="module">
+import { neon } from "./neon-client.js";
 const user="leorbr27",excluded=["Portfolio"];
 const descriptions={Trabalho:"Página de favoritos de trabalho, com links personalizáveis e organização por arrastar e soltar.",Supermercado:"Aplicação web para registrar e comparar preços de produtos em supermercados.",MegaSenaAnalyzer:"Ferramenta de análise estatística e geração de jogos para a Mega-Sena.",corretores:"Sistema de briefing e gestão de informações para produção de vídeos imobiliários.",Gastos:"Aplicação web para organização e acompanhamento de gastos.",Praticagem:"Projeto de monitoramento e consulta de informações relacionadas à praticagem.",Organizacao_formatura:"Plataforma colaborativa para organizar decisões e participantes de uma formatura."};
 const labels={Trabalho:"Favoritos de trabalho",Supermercado:"Comparador de preços",MegaSenaAnalyzer:"Análise da Mega-Sena",corretores:"Vídeo imobiliário",Gastos:"Finanças pessoais",Praticagem:"Monitoramento",Organizacao_formatura:"Organização de eventos"};
 function projectUrl(n){return "https://"+user+".github.io/"+encodeURIComponent(n)+"/"}
 function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
 function safeUrl(url){try{const u=new URL(url);return ["http:","https:"].includes(u.protocol)?u.href:""}catch{return ""}}
-function imageHtml(url,alt){const src=safeUrl(url);return src?'<div class="project-image-wrap"><img class="project-image" src="'+esc(src)+'" alt="'+esc(alt)+'" loading="lazy" onerror="this.parentElement.innerHTML=\'<div class="project-placeholder">Imagem indisponível</div>\'></div>':'<div class="project-image-wrap"><div class="project-placeholder">Adicione uma imagem</div></div>'}
-function renderProfile(url){const src=safeUrl(url);document.getElementById("profile").innerHTML=src?'<img class="profile-photo" src="'+esc(src)+'" alt="Leonardo Ribeiro" onerror="this.outerHTML=\'<div class="profile-placeholder">Foto indisponível</div>\'">':'<div class="profile-placeholder">Adicione sua foto na área restrita</div>';document.getElementById("about-photo").innerHTML=src?'<img class="about-photo" src="'+esc(src)+'" alt="Leonardo Ribeiro" loading="lazy">':'<div class="about-placeholder">Sua foto pode aparecer aqui</div>'}
+function imageHtml(data,alt){return data?'<div class="project-image-wrap"><img class="project-image" src="'+esc(data)+'" alt="'+esc(alt)+'" loading="lazy"></div>':'<div class="project-image-wrap"><div class="project-placeholder">Adicione uma imagem</div></div>'}
+function renderProfile(data){const src=data||"";document.getElementById("profile").innerHTML=src?'<img class="profile-photo" src="'+esc(src)+'" alt="Leonardo Ribeiro">':'<div class="profile-placeholder">Adicione sua foto na área restrita</div>';document.getElementById("about-photo").innerHTML=src?'<img class="about-photo" src="'+esc(src)+'" alt="Leonardo Ribeiro" loading="lazy">':'<div class="about-placeholder">Sua foto pode aparecer aqui</div>'}
 async function load(){
-  const el=document.getElementById("projects");
-  try{
-    const [settingsRes,projectsRes,reposRes]=await Promise.all([
-      supabase.from("portfolio_settings").select("profile_image_url").eq("id",true).maybeSingle(),
-      supabase.from("portfolio_projects").select("repo_name,title,image_url"),
-      fetch("https://api.github.com/users/"+user+"/repos?per_page=100&sort=updated")
-    ]);
-    if(settingsRes.error)throw settingsRes.error;
-    if(projectsRes.error)throw projectsRes.error;
-    if(!reposRes.ok)throw new Error("GitHub indisponível");
-    const repos=await reposRes.json();
-    const data=projectsRes.data||[];
-    const visible=repos.filter(r=>!excluded.includes(r.name)&&!r.fork&&!r.archived);
-    const map=new Map(data.map(x=>[x.repo_name,x]));
-    document.getElementById("count").textContent=visible.length+(visible.length===1?" projeto":" projetos");
-    if(settingsRes.data?.profile_image_url)renderProfile(settingsRes.data.profile_image_url+"?v="+encodeURIComponent(settingsRes.data.updated_at||""));else renderProfile("");
-    if(!visible.length){el.innerHTML='<div class="error">Nenhum projeto encontrado.</div>';return}
-    el.innerHTML=visible.map((r,i)=>{const p=map.get(r.name)||{};const title=p.title||labels[r.name]||r.name.replaceAll("_"," ");const image=p.image_url||"";return '<a class="project" href="'+projectUrl(r.name)+'" target="_blank" rel="noopener" aria-label="Abrir projeto '+esc(title)+'">'+imageHtml(image,"Imagem do projeto "+title)+'<div class="number">'+String(i+1).padStart(2,"0")+'</div><h3>'+esc(title)+'</h3><p>'+esc(descriptions[r.name]||r.description||"Projeto desenvolvido por Leonardo Ribeiro.")+'</p></a>'}).join("")
-  }catch(e){document.getElementById("count").textContent="";el.innerHTML='<div class="error">Não foi possível carregar o conteúdo agora. <a href="https://github.com/leorbr27" target="_blank" rel="noopener">Ver GitHub ↗</a></div>';renderProfile("")}
+ const el=document.getElementById("projects");
+ try{
+  const [s,p,r]=await Promise.all([
+   neon.from("portfolio_settings").select("profile_image_data").eq("id",true).maybeSingle(),
+   neon.from("portfolio_projects").select("repo_name,title,image_data"),
+   fetch("https://api.github.com/users/"+user+"/repos?per_page=100&sort=updated")
+  ]);
+  if(s.error)throw s.error;if(p.error)throw p.error;if(!r.ok)throw new Error("GitHub indisponível");
+  const repos=(await r.json()).filter(x=>!excluded.includes(x.name)&&!x.fork&&!x.archived),map=new Map((p.data||[]).map(x=>[x.repo_name,x]));
+  document.getElementById("count").textContent=repos.length+(repos.length===1?" projeto":" projetos");
+  renderProfile(s.data?.profile_image_data||"");
+  el.innerHTML=repos.map((r,i)=>{const x=map.get(r.name)||{},title=x.title||labels[r.name]||r.name.replaceAll("_"," ");return '<a class="project" href="'+projectUrl(r.name)+'" target="_blank" rel="noopener" aria-label="Abrir projeto '+esc(title)+'">'+imageHtml(x.image_data,"Imagem do projeto "+title)+'<div class="number">'+String(i+1).padStart(2,"0")+'</div><h3>'+esc(title)+'</h3><p>'+esc(descriptions[r.name]||r.description||"Projeto desenvolvido por Leonardo Ribeiro.")+'</p></a>'}).join("");
+ }catch(e){console.error(e);document.getElementById("count").textContent="";el.innerHTML='<div class="error">Não foi possível carregar o conteúdo agora. <a href="https://github.com/leorbr27" target="_blank" rel="noopener">Ver GitHub ↗</a></div>';renderProfile("")}
 }
 document.getElementById("year").textContent=new Date().getFullYear();load();
 </script>
