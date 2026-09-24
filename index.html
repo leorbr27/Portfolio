@@ -38,7 +38,7 @@ const descriptions={Trabalho:"Página de favoritos de trabalho, com links person
 const labels={Trabalho:"Favoritos de trabalho",Supermercado:"Comparador de preços",MegaSenaAnalyzer:"Análise de loteria",corretores:"Vídeo imobiliário",Gastos:"Finanças pessoais",Praticagem:"Monitoramento",Organizacao_formatura:"Organização de eventos"};
 const cfg=window.PORTFOLIO_CONFIG||{profilePhoto:"",projectImages:{}};
 function projectUrl(n){return "https://"+user+".github.io/"+encodeURIComponent(n)+"/"}
-function pretty(n){return labels[n]||n.replaceAll("_"," ")}
+function pretty(n){return cfg.projectNames?.[n]||labels[n]||n.replaceAll("_"," ")}
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
 function safeUrl(url){try{const u=new URL(url);return ["http:","https:"].includes(u.protocol)?u.href:""}catch{return ""}}
 function imageHtml(url,alt,cls="project-image-wrap"){const src=safeUrl(url);return src?'<div class="'+cls+'"><img class="'+(cls==="project-image-wrap"?"project-image":"about-photo")+'" src="'+esc(src)+'" alt="'+esc(alt)+'" loading="lazy" onerror="this.parentElement.innerHTML=\'<div class="project-placeholder">Imagem indisponível</div>\'"></div>':''}
