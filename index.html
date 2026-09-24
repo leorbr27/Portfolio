@@ -45,17 +45,34 @@ function renderProfile(data){const src=data||"";document.getElementById("profile
 async function load(){
  const el=document.getElementById("projects");
  try{
-  const [s,p,r]=await Promise.all([
-   neon.from("portfolio_settings").select("profile_image_data").eq("id",true).maybeSingle(),
-   neon.from("portfolio_projects").select("repo_name,title,image_data"),
-   fetch("https://api.github.com/users/"+user+"/repos?per_page=100&sort=updated")
-  ]);
-  if(s.error)throw s.error;if(p.error)throw p.error;if(!r.ok)throw new Error("GitHub indisponível");
-  const repos=(await r.json()).filter(x=>!excluded.includes(x.name)&&!x.fork&&!x.archived),map=new Map((p.data||[]).map(x=>[x.repo_name,x]));
+  const githubPromise=fetch("https://api.github.com/users/"+user+"/repos?per_page=100&sort=updated");
+  let settings=null, portfolioRows=[];
+  // Neon is optional for the public page: if the database is not provisioned yet,
+  // the portfolio still renders from GitHub using the legacy/default labels.
+  try{
+   const [s,p]=await Promise.all([
+    neon.from("portfolio_settings").select("profile_image_data").eq("id",true).maybeSingle(),
+    neon.from("portfolio_projects").select("repo_name,title,image_data")
+   ]);
+   if(!s.error) settings=s.data;
+   if(!p.error) portfolioRows=p.data||[];
+  }catch(neonError){console.warn("Dados administrativos do Neon indisponíveis; usando dados públicos do GitHub.",neonError)}
+  const r=await githubPromise;
+  if(!r.ok)throw new Error("GitHub indisponível");
+  const repos=(await r.json()).filter(x=>!excluded.includes(x.name)&&!x.fork&&!x.archived);
+  const map=new Map(portfolioRows.map(x=>[x.repo_name,x]));
   document.getElementById("count").textContent=repos.length+(repos.length===1?" projeto":" projetos");
-  renderProfile(s.data?.profile_image_data||"");
-  el.innerHTML=repos.map((r,i)=>{const x=map.get(r.name)||{},title=x.title||labels[r.name]||r.name.replaceAll("_"," ");return '<a class="project" href="'+projectUrl(r.name)+'" target="_blank" rel="noopener" aria-label="Abrir projeto '+esc(title)+'">'+imageHtml(x.image_data,"Imagem do projeto "+title)+'<div class="number">'+String(i+1).padStart(2,"0")+'</div><h3>'+esc(title)+'</h3><p>'+esc(descriptions[r.name]||r.description||"Projeto desenvolvido por Leonardo Ribeiro.")+'</p></a>'}).join("");
- }catch(e){console.error(e);document.getElementById("count").textContent="";el.innerHTML='<div class="error">Não foi possível carregar o conteúdo agora. <a href="https://github.com/leorbr27" target="_blank" rel="noopener">Ver GitHub ↗</a></div>';renderProfile("")}
+  renderProfile(settings?.profile_image_data||"");
+  el.innerHTML=repos.map((r,i)=>{
+   const x=map.get(r.name)||{},title=x.title||labels[r.name]||r.name.replaceAll("_"," ");
+   return '<a class="project" href="'+projectUrl(r.name)+'" target="_blank" rel="noopener" aria-label="Abrir projeto '+esc(title)+'">'+imageHtml(x.image_data,"Imagem do projeto "+title)+'<div class="number">'+String(i+1).padStart(2,"0")+'</div><h3>'+esc(title)+'</h3><p>'+esc(descriptions[r.name]||r.description||"Projeto desenvolvido por Leonardo Ribeiro.")+'</p></a>'
+  }).join("");
+ }catch(e){
+  console.error(e);
+  document.getElementById("count").textContent="";
+  el.innerHTML='<div class="error">Não foi possível carregar os projetos agora. <a href="https://github.com/leorbr27" target="_blank" rel="noopener">Ver GitHub ↗</a></div>';
+  renderProfile("");
+ }
 }
 document.getElementById("year").textContent=new Date().getFullYear();load();
 </script>
