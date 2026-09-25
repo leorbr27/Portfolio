@@ -28,13 +28,7 @@ main{padding:45px 0 80px}h1{font-size:clamp(38px,7vw,72px);letter-spacing:-.06em
 </div></div><div class="panel" style="margin-top:20px"><h2>Projetos</h2><p class="hint">Edite o nome e a imagem de cada card.</p><div id="projects" class="projects"></div><div class="save-all"><button id="saveBtn" class="accent">Salvar alterações</button></div><div id="saveMsg" class="msg hidden"></div></div>
 </section></main></div>
 <script type="module">
-import { createAuthClient } from "https://esm.sh/@neondatabase/neon-js@latest/auth";
-import { createClient, BetterAuthVanillaAdapter } from "https://esm.sh/@neondatabase/neon-js@latest";
-
-const AUTH_URL="https://ep-falling-frost-ac6kshzo.neonauth.sa-east-1.aws.neon.tech/corretores/auth";
-const DATA_API_URL="https://ep-falling-frost-ac6kshzo.apirest.sa-east-1.aws.neon.tech/corretores/rest/v1";
-const auth=createAuthClient(AUTH_URL);
-const neon=createClient({auth:{adapter:BetterAuthVanillaAdapter(),url:AUTH_URL,allowAnonymous:true},dataApi:{url:DATA_API_URL}});
+import { neon } from "./neon-client.js";
 const GITHUB_USER="leorbr27",excluded=["Portfolio"];let projects=[],profileData="",profileFile=null;
 const defaultTexts={hero_eyebrow:"Portfólio · Leonardo Ribeiro",hero_title:"Projetos que\nviram",hero_accent:"soluções.",hero_intro:"Desenvolvimento de ferramentas web, automações e experiências digitais para transformar ideias em produtos funcionais.",projects_title:"Projetos",about_title:"Sobre",about_text:"Um espaço para reunir projetos digitais, ferramentas e experimentos desenvolvidos por Leonardo Ribeiro.",footer_status:"Conteúdo atualizado pela área administrativa"};
 const defaults={Trabalho:"Favoritos de trabalho",Supermercado:"Comparador de preços",MegaSenaAnalyzer:"Análise da Mega-Sena",corretores:"Vídeos imobiliários",Gastos:"Finanças pessoais",Praticagem:"Monitoramento de praticagem",Organizacao_formatura:"Organização de formatura"};
@@ -43,7 +37,7 @@ function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&l
 function message(el,text,ok=false){$(el).textContent=text;$(el).className="msg"+(ok?" ok":"");}
 function fileToData(file){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(String(r.result));r.onerror=reject;r.readAsDataURL(file)})}
 async function checkSession(){
-  const r=await auth.getSession();
+  const r=await neon.auth.getSession();
   if(r?.error) throw new Error(r.error.message||"Não foi possível verificar a sessão.");
   return r?.data?.user||null;
 }
@@ -53,7 +47,7 @@ async function login(){
     const email=$("email").value.trim(),password=$("password").value;
     if(!email||!password)throw new Error("Informe e-mail e senha.");
     message("loginMsg","Entrando…");
-    const r=await auth.signIn.email({email,password});
+    const r=await neon.auth.signIn.email({email,password});
     if(r?.error)throw new Error(r.error.message||"E-mail ou senha inválidos.");
     const user=await checkSession();
     if(!user)throw new Error("Login realizado, mas a sessão não foi criada.");
@@ -69,7 +63,25 @@ async function isAdmin(user){
 async function showAdmin(user){
   try{
     if(!(await isAdmin(user))){
-      await auth.signOut();
+      await neon.auth.signOut();
+      $("loginView").classList.remove("hidden");$("adminView").classList.add("hidden");
+      message("loginMsg","Esta conta não está autorizada a administrar o Portfolio.");return;
+    }
+    $("loginView").classList.add("hidden");$("adminView").classList.remove("hidden");
+    $("userLabel").textContent="Conectado como "+(user?.email||"administrador");
+    await load();
+  }catch(e){console.error(e);$("loginView").classList.remove("hidden");$("adminView").classList.add("hidden");message("loginMsg",e?.message||"Não foi possível verificar o acesso administrativo.")}
+}
+async function isAdmin(user){
+  if(!user?.id)throw new Error("O Neon Auth não retornou o ID do usuário.");
+  const r=await neon.from("portfolio_admins").select("user_id,email").eq("user_id",String(user.id)).limit(1);
+  if(r.error)throw new Error("Falha ao consultar portfolio_admins: "+(r.error.message||r.error.code||"erro desconhecido"));
+  return Array.isArray(r.data)&&r.data.length>0;
+}
+async function showAdmin(user){
+  try{
+    if(!(await isAdmin(user))){
+      await neon.auth.signOut();
       $("loginView").classList.remove("hidden");$("adminView").classList.add("hidden");
       message("loginMsg","Esta conta não está autorizada a administrar o Portfolio.");return;
     }
@@ -87,7 +99,7 @@ async function save(){ $("saveBtn").disabled=true;try{const textData={hero_eyebr
 const textSave=await neon.from("portfolio_settings").upsert({id:true,...textData,updated_at:new Date().toISOString()});if(textSave.error)throw textSave.error;
 if(profileFile){$("profileStatus").textContent="Processando foto…";profileData=await fileToData(profileFile);const r=await neon.from("portfolio_settings").upsert({id:true,profile_image_data:profileData,updated_at:new Date().toISOString()});if(r.error)throw r.error;profileFile=null;$("profileFile").value="";renderProfile()}for(let i=0;i<projects.length;i++){const card=document.querySelectorAll(".project-card")[i],title=card.querySelector(".title").value.trim()||defaults[projects[i].repo_name];let imageData=projects[i].image_data;if(projects[i]._file){$("status-"+i).textContent="Processando…";imageData=await fileToData(projects[i]._file);projects[i]._file=null}const r=await neon.from("portfolio_projects").upsert({repo_name:projects[i].repo_name,title,image_data:imageData,updated_at:new Date().toISOString()});if(r.error)throw r.error;projects[i].title=title;projects[i].image_data=imageData;$("status-"+i).textContent="Salvo."}message("saveMsg","Alterações salvas no Neon.",true);renderProjects()}catch(e){console.error(e);message("saveMsg",e.message||"Não foi possível salvar.")}finally{$("saveBtn").disabled=false}}
 $("profileFile").onchange=e=>{profileFile=e.target.files[0]||null;if(profileFile){if(profileFile.size>1572864){$("profileStatus").textContent="Imagem acima de 1,5 MB.";profileFile=null;e.target.value="";return}$("profilePreview").innerHTML='<img src="'+URL.createObjectURL(profileFile)+'" alt="Prévia">';$("profileStatus").textContent="Nova foto selecionada."}};
-$("loginBtn").onclick=login;$("saveBtn").onclick=save;$("logoutBtn").onclick=async()=>{await neon.auth.signOut();$("adminView").classList.add("hidden");$("loginView").classList.remove("hidden")};
+$("loginBtn").onclick=login;$("saveBtn").onclick=save;$("logoutBtn").onclick=async()=>{await neon.neon.auth.signOut();$("adminView").classList.add("hidden");$("loginView").classList.remove("hidden")};
 (async()=>{
   try{
     const u=await checkSession();
@@ -109,7 +121,7 @@ async function isAdmin(user){
 async function showAdmin(user){
   try{
     if(!(await isAdmin(user))){
-      await neon.auth.signOut();
+      await neon.neon.auth.signOut();
       $("loginView").classList.remove("hidden");
       $("adminView").classList.add("hidden");
       message("loginMsg","Esta conta não está autorizada a administrar o Portfolio.");
