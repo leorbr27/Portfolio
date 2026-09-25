@@ -8,9 +8,7 @@ header{padding:24px 0;border-bottom:1px solid var(--line);display:flex;justify-c
 main{padding:45px 0 80px}h1{font-size:clamp(38px,7vw,72px);letter-spacing:-.06em;margin:0 0 10px}h2{font-size:22px;margin:0 0 8px}.lead{color:var(--muted);margin:0 0 35px}.auth,.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:26px;box-shadow:0 8px 30px rgba(0,0,0,.04)}
 .auth{max-width:480px}.field{display:block;margin:0 0 16px}.field span{display:block;font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:7px}.field input,.project-card input{width:100%;border:1px solid var(--line);border-radius:9px;padding:13px 14px;font:inherit;background:#fff}.buttons{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}button{border:0;border-radius:9px;padding:12px 16px;font:inherit;font-weight:700;cursor:pointer;background:#171717;color:#fff}button.secondary{background:#e9e6de;color:#171717}button.accent{background:var(--accent)}button:disabled{opacity:.5;cursor:not-allowed}.hint{font-size:13px;color:var(--muted);line-height:1.5}.msg{margin-top:14px;padding:11px 13px;border-radius:8px;background:#eeeae2;font-size:14px}.msg.ok{background:#e0f1e7;color:#256b43}.msg.err{background:#f5e2df;color:#8d352c}
 .hidden{display:none!important}.topbar{display:flex;justify-content:space-between;gap:15px;align-items:flex-start;margin-bottom:22px}.topbar .user{color:var(--muted);font-size:13px}.profile-editor{display:grid;grid-template-columns:190px 1fr;gap:26px;align-items:center}.preview{width:190px;aspect-ratio:4/5;background:#e8e5dd;border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center;color:#999;font-size:12px;text-align:center}.preview img{width:100%;height:100%;object-fit:cover}.upload{border:1px dashed #bdb9b0;border-radius:10px;padding:18px;background:#faf9f5}.upload input{width:100%}.projects{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px}.text-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 18px}.text-grid .field:nth-child(4),.text-grid .field:nth-child(7){grid-column:1/-1}.field textarea{width:100%;border:1px solid var(--line);border-radius:9px;padding:13px 14px;font:inherit;background:#fff;resize:vertical}.project-card{border:1px solid var(--line);border-radius:12px;padding:18px;background:#fff}.project-head{display:flex;justify-content:space-between;gap:10px;align-items:baseline;margin-bottom:12px}.repo{font-size:12px;color:var(--muted)}.project-preview{aspect-ratio:16/8.5;background:#e8e5dd;border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center;color:#999;font-size:12px;margin:14px 0}.project-preview img{width:100%;height:100%;object-fit:cover}.status{min-height:20px;font-size:13px;color:var(--muted);margin-top:8px}.save-all{position:sticky;bottom:15px;margin-top:25px;display:flex;justify-content:flex-end}.save-all button{box-shadow:0 8px 25px rgba(0,0,0,.18)}.small{font-size:12px;color:var(--muted);margin-top:8px}@media(max-width:760px){.text-grid{grid-template-columns:1fr}.text-grid .field{grid-column:auto!important}.wrap{padding:0 16px}.profile-editor,.projects{grid-template-columns:1fr}.preview{width:min(190px,100%)}.topbar{align-items:stretch;flex-direction:column}}
-</style>
-<style id="last-update-style">.last-update{width:100%;text-align:center;font-size:10px;line-height:1.3;color:#8a8f98;margin:18px 0 10px;padding:0 12px;font-weight:400}</style>
-</head><body><div class="wrap">
+</style></head><body><div class="wrap">
 <header><a class="logo" href="index.html">LR.</a><a class="back" href="index.html">← Voltar ao portfólio</a></header><main>
 <section id="loginView"><h1>Área restrita.</h1><p class="lead">Edite o portfólio sem alterar o código de configuração.</p><div class="auth"><h2>Acesso administrativo</h2><p class="hint">Use seu e-mail e senha do Neon Auth.</p><label class="field"><span>E-mail</span><input id="email" type="email" autocomplete="email"></label><label class="field"><span>Senha</span><input id="password" type="password" autocomplete="current-password"></label><div class="buttons"><button id="loginBtn" type="button">Entrar</button></div><div id="loginMsg" class="msg hidden"></div></div></section>
 <section id="adminView" class="hidden"><div class="topbar"><div><h1>Editar portfólio.</h1><div class="user" id="userLabel"></div></div><button id="logoutBtn" class="secondary">Sair</button></div>
@@ -72,5 +70,51 @@ async function showAdmin(user){
     await load();
   }catch(e){console.error(e);$("loginView").classList.remove("hidden");$("adminView").classList.add("hidden");message("loginMsg",e?.message||"Não foi possível verificar o acesso administrativo.")}
 }
-</script><div class="last-update" aria-label="Última atualização do código">Última atualização do código: 24/09/2026, 22:14</div>
-</body></html>
+async function signup(){try{const email=$("email").value.trim(),password=$("password").value;if(!email||!password)throw new Error("Informe e-mail e senha.");if(password.length<8)throw new Error("Use uma senha com pelo menos 8 caracteres.");const {data,error}=await neon.auth.signUp.email({email,password,name:"Leonardo Ribeiro"});if(error)throw new Error(error.message||"Falha ao criar acesso.");if(data?.user){message("loginMsg","Conta criada. Confirme o e-mail, se solicitado, e depois entre com sua conta.",true)}else message("loginMsg","Conta criada. Se o Neon solicitar confirmação de e-mail, confirme e entre novamente.",true)}catch(e){message("loginMsg",e.message||"Não foi possível criar o acesso.")}}
+function fillTextFields(s){const x={...defaultTexts,...(s||{})};$("heroEyebrowInput").value=x.hero_eyebrow;$("heroTitleInput").value=x.hero_title;$("heroAccentInput").value=x.hero_accent;$("heroIntroInput").value=x.hero_intro;$("projectsTitleInput").value=x.projects_title;$("aboutTitleInput").value=x.about_title;$("aboutTextInput").value=x.about_text;$("footerStatusInput").value=x.footer_status}
+function renderProfile(){ $("profilePreview").innerHTML=profileData?'<img src="'+esc(profileData)+'" alt="Foto principal">':"Nenhuma foto definida" }
+function renderProjects(){ $("projects").innerHTML=projects.map((p,i)=>'<article class="project-card"><div class="project-head"><strong>'+String(i+1).padStart(2,"0")+' · '+esc(p.repo_name)+'</strong><span class="repo">GitHub</span></div><label class="field"><span>Nome exibido</span><input class="title" value="'+esc(p.title)+'" maxlength="100"></label><div class="project-preview" id="preview-'+i+'">'+(p.image_data?'<img src="'+esc(p.image_data)+'" alt="">':"Nenhuma foto definida")+'</div><div class="upload"><input class="file" type="file" accept="image/jpeg,image/png,image/webp,image/gif" data-index="'+i+'"><div class="small">Até 1,5 MB por imagem.</div><div class="status" id="status-'+i+'"></div></div></article>').join("");document.querySelectorAll(".file").forEach(x=>x.onchange=e=>{const i=+e.target.dataset.index,f=e.target.files[0];if(!f)return;if(f.size>1572864){$("status-"+i).textContent="Imagem acima de 1,5 MB.";e.target.value="";return}projects[i]._file=f;$("preview-"+i).innerHTML='<img src="'+URL.createObjectURL(f)+'" alt="Prévia">';$("status-"+i).textContent="Nova imagem selecionada."})}
+async function load(){const [s,p,r]=await Promise.all([neon.from("portfolio_settings").select("profile_image_data").eq("id",true).maybeSingle(),neon.from("portfolio_projects").select("repo_name,title,image_data"),fetch("https://api.github.com/users/"+GITHUB_USER+"/repos?per_page=100&sort=updated")]);if(s.error)throw s.error;if(p.error)throw p.error;if(!r.ok)throw new Error("GitHub indisponível");const repos=(await r.json()).filter(x=>!excluded.includes(x.name)&&!x.fork&&!x.archived),map=new Map((p.data||[]).map(x=>[x.repo_name,x]));projects=repos.map(r=>map.get(r.name)||{repo_name:r.name,title:defaults[r.name]||r.name.replaceAll("_"," "),image_data:null});profileData=s.data?.profile_image_data||"";fillTextFields(s.data);renderProfile();renderProjects()}
+async function save(){ $("saveBtn").disabled=true;try{const textData={hero_eyebrow:$("heroEyebrowInput").value.trim(),hero_title:$("heroTitleInput").value.trim(),hero_accent:$("heroAccentInput").value.trim(),hero_intro:$("heroIntroInput").value.trim(),projects_title:$("projectsTitleInput").value.trim(),about_title:$("aboutTitleInput").value.trim(),about_text:$("aboutTextInput").value.trim(),footer_status:$("footerStatusInput").value.trim()};
+const textSave=await neon.from("portfolio_settings").upsert({id:true,...textData,updated_at:new Date().toISOString()});if(textSave.error)throw textSave.error;
+if(profileFile){$("profileStatus").textContent="Processando foto…";profileData=await fileToData(profileFile);const r=await neon.from("portfolio_settings").upsert({id:true,profile_image_data:profileData,updated_at:new Date().toISOString()});if(r.error)throw r.error;profileFile=null;$("profileFile").value="";renderProfile()}for(let i=0;i<projects.length;i++){const card=document.querySelectorAll(".project-card")[i],title=card.querySelector(".title").value.trim()||defaults[projects[i].repo_name];let imageData=projects[i].image_data;if(projects[i]._file){$("status-"+i).textContent="Processando…";imageData=await fileToData(projects[i]._file);projects[i]._file=null}const r=await neon.from("portfolio_projects").upsert({repo_name:projects[i].repo_name,title,image_data:imageData,updated_at:new Date().toISOString()});if(r.error)throw r.error;projects[i].title=title;projects[i].image_data=imageData;$("status-"+i).textContent="Salvo."}message("saveMsg","Alterações salvas no Neon.",true);renderProjects()}catch(e){console.error(e);message("saveMsg",e.message||"Não foi possível salvar.")}finally{$("saveBtn").disabled=false}}
+$("profileFile").onchange=e=>{profileFile=e.target.files[0]||null;if(profileFile){if(profileFile.size>1572864){$("profileStatus").textContent="Imagem acima de 1,5 MB.";profileFile=null;e.target.value="";return}$("profilePreview").innerHTML='<img src="'+URL.createObjectURL(profileFile)+'" alt="Prévia">';$("profileStatus").textContent="Nova foto selecionada."}};
+$("loginBtn").onclick=login;$("saveBtn").onclick=save;$("logoutBtn").onclick=async()=>{await neon.neon.auth.signOut();$("adminView").classList.add("hidden");$("loginView").classList.remove("hidden")};
+(async()=>{
+  try{
+    const u=await checkSession();
+    if(u)await showAdmin(u);
+  }catch(e){
+    console.error("Falha ao verificar sessão inicial:",e);
+    message("loginMsg",e?.message||"Não foi possível verificar a sessão.");
+  }
+})();
+async function isAdmin(user){
+  if(!user?.id)throw new Error("O Neon Auth não retornou o ID do usuário autenticado.");
+  const r=await neon.from("portfolio_admins").select("user_id,email").eq("user_id",String(user.id)).limit(1);
+  if(r.error){
+    console.error("Erro ao consultar portfolio_admins:",r.error);
+    throw new Error("Falha ao consultar portfolio_admins: "+(r.error.message||r.error.code||"erro desconhecido"));
+  }
+  return Array.isArray(r.data)&&r.data.length>0;
+}
+async function showAdmin(user){
+  try{
+    if(!(await isAdmin(user))){
+      await neon.neon.auth.signOut();
+      $("loginView").classList.remove("hidden");
+      $("adminView").classList.add("hidden");
+      message("loginMsg","Esta conta não está autorizada a administrar o Portfolio.");
+      return;
+    }
+    $("loginView").classList.add("hidden");
+    $("adminView").classList.remove("hidden");
+    $("userLabel").textContent="Conectado como "+(user?.email||"administrador");
+    try{await load()}catch(e){console.error("Erro ao carregar o painel:",e);message("saveMsg","Erro ao carregar os dados do Portfolio: "+(e.message||"erro desconhecido"))}
+  }catch(e){
+    $("loginView").classList.remove("hidden");
+    $("adminView").classList.add("hidden");
+    message("loginMsg",e.message||"Não foi possível verificar o acesso administrativo.");
+  }
+}
+</script></body></html>
