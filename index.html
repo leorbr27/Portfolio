@@ -15,6 +15,8 @@ header{padding:28px 0;border-bottom:1px solid var(--line);display:flex;justify-c
 .about{padding:125px 0}.about-grid{display:grid;grid-template-columns:1fr 1.4fr .75fr;gap:60px;align-items:start}.about h2{font-size:14px;text-transform:uppercase;letter-spacing:.14em;margin:0}.about-text{font-size:clamp(28px,4vw,50px);letter-spacing:-.045em;line-height:1.05;margin:0}.about-photo{width:100%;aspect-ratio:1/1;object-fit:cover;background:#e8e5dd}.about-placeholder{aspect-ratio:1/1;background:#e8e5dd;display:flex;align-items:center;justify-content:center;color:#aaa69d;font-size:11px;text-transform:uppercase;letter-spacing:.1em;text-align:center;padding:15px}
 footer{border-top:1px solid var(--line);padding:30px 0 55px;display:flex;justify-content:space-between;color:var(--muted);font-size:13px}.status{display:flex;align-items:center;gap:8px}.dot{width:7px;height:7px;background:#39a96b;border-radius:50%}.loading,.error{padding:70px 0;color:var(--muted)}
 @media(max-width:800px){.wrap{padding:0 20px}.nav{gap:14px}.nav a:nth-child(2){display:none}.hero{padding:70px 0 85px;grid-template-columns:1fr;gap:40px}.profile{justify-self:center;width:min(100%,360px);display:flex;justify-content:center}.profile-photo{width:100%;max-width:360px}.profile-placeholder{width:100%;max-width:360px}.intro{font-size:18px}.projects{grid-template-columns:1fr}.project,.project:nth-child(even){padding:20px 0;min-height:300px;border-left:0}.project:hover,.project:nth-child(even):hover{padding-left:0}.about{padding:90px 0}.about-grid{grid-template-columns:1fr;gap:25px}.about-text{font-size:32px}.about-photo,.about-placeholder{max-width:260px}footer{display:block}footer div+div{margin-top:14px}}
+
+.last-update{width:100%;text-align:center;font-size:10px;line-height:1.3;color:#8a8f98;margin:18px 0 10px;padding:0 12px;font-weight:400;}
 </style>
 <script type="module" src="neon-client.js"></script>
 </head>
@@ -76,5 +78,6 @@ async function load(){
 }
 document.getElementById("year").textContent=new Date().getFullYear();load();
 </script>
+<div class="last-update" aria-label="Última atualização">Última atualização: 24/09/2026, 22:02</div>
 </body>
 </html>
