@@ -62,7 +62,7 @@ async function load(){
   const r=await githubPromise;
   if(!r.ok)throw new Error("GitHub indisponível");
   const repos=(await r.json()).filter(x=>!excluded.includes(x.name)&&!x.fork&&!x.archived);
-  const map=new Map(portfolioRows.map(x=>[x.repo_name,x]));
+  const map=new Map(portfolioRows.filter(x=>x.repo_name!=="__portfolio_texts__").map(x=>[x.repo_name,x]));
   document.getElementById("count").textContent=repos.length+(repos.length===1?" projeto":" projetos");
   renderProfile(settings?.profile_image_data||"");
   el.innerHTML=repos.map((r,i)=>{
