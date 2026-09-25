@@ -34,10 +34,13 @@ $("profileFile").onchange=e=>{profileFile=e.target.files[0]||null;if(profileFile
 $("loginBtn").onclick=login;$("saveBtn").onclick=save;$("logoutBtn").onclick=async()=>{await neon.auth.signOut();$("adminView").classList.add("hidden");$("loginView").classList.remove("hidden")};
 (async()=>{const u=await checkSession();if(u)showAdmin(u)})();
 async function isAdmin(user){
-  if(!user?.id)return false;
-  const r=await neon.from("portfolio_admins").select("user_id,email").eq("user_id",user.id).maybeSingle();
-  if(r.error){console.error(r.error);throw new Error("Não foi possível verificar a autorização administrativa.");}
-  return !!r.data;
+  if(!user?.id)throw new Error("O Neon Auth não retornou o ID do usuário autenticado.");
+  const r=await neon.from("portfolio_admins").select("user_id,email").eq("user_id",String(user.id)).limit(1);
+  if(r.error){
+    console.error("Erro ao consultar portfolio_admins:",r.error);
+    throw new Error("Falha ao consultar portfolio_admins: "+(r.error.message||r.error.code||"erro desconhecido"));
+  }
+  return Array.isArray(r.data)&&r.data.length>0;
 }
 async function showAdmin(user){
   try{
