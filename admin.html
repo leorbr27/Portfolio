@@ -79,7 +79,7 @@ async function save(){ $("saveBtn").disabled=true;try{const textData={hero_eyebr
 const textSave=await neon.from("portfolio_settings").upsert({id:true,...textData,updated_at:new Date().toISOString()});if(textSave.error)throw textSave.error;
 if(profileFile){$("profileStatus").textContent="Processando foto…";profileData=await fileToData(profileFile);const r=await neon.from("portfolio_settings").upsert({id:true,profile_image_data:profileData,updated_at:new Date().toISOString()});if(r.error)throw r.error;profileFile=null;$("profileFile").value="";renderProfile()}for(let i=0;i<projects.length;i++){const card=document.querySelectorAll(".project-card")[i],title=card.querySelector(".title").value.trim()||defaults[projects[i].repo_name];let imageData=projects[i].image_data;if(projects[i]._file){$("status-"+i).textContent="Processando…";imageData=await fileToData(projects[i]._file);projects[i]._file=null}const r=await neon.from("portfolio_projects").upsert({repo_name:projects[i].repo_name,title,image_data:imageData,updated_at:new Date().toISOString()});if(r.error)throw r.error;projects[i].title=title;projects[i].image_data=imageData;$("status-"+i).textContent="Salvo."}message("saveMsg","Alterações salvas no Neon.",true);renderProjects()}catch(e){console.error(e);message("saveMsg",e.message||"Não foi possível salvar.")}finally{$("saveBtn").disabled=false}}
 $("profileFile").onchange=e=>{profileFile=e.target.files[0]||null;if(profileFile){if(profileFile.size>1572864){$("profileStatus").textContent="Imagem acima de 1,5 MB.";profileFile=null;e.target.value="";return}$("profilePreview").innerHTML='<img src="'+URL.createObjectURL(profileFile)+'" alt="Prévia">';$("profileStatus").textContent="Nova foto selecionada."}};
-$("loginBtn").onclick=login;$("saveBtn").onclick=save;$("logoutBtn").onclick=async()=>{await neon.neon.auth.signOut();$("adminView").classList.add("hidden");$("loginView").classList.remove("hidden")};
+$("loginBtn").onclick=login;$("saveBtn").onclick=save;$("logoutBtn").onclick=async()=>{await neon.auth.signOut();$("adminView").classList.add("hidden");$("loginView").classList.remove("hidden")};
 (async()=>{
   try{
     const u=await checkSession();
@@ -89,32 +89,4 @@ $("loginBtn").onclick=login;$("saveBtn").onclick=save;$("logoutBtn").onclick=asy
     message("loginMsg",e?.message||"Não foi possível verificar a sessão.");
   }
 })();
-async function isAdmin(user){
-  if(!user?.id)throw new Error("O Neon Auth não retornou o ID do usuário autenticado.");
-  const r=await neon.from("portfolio_admins").select("user_id,email").eq("user_id",String(user.id)).limit(1);
-  if(r.error){
-    console.error("Erro ao consultar portfolio_admins:",r.error);
-    throw new Error("Falha ao consultar portfolio_admins: "+(r.error.message||r.error.code||"erro desconhecido"));
-  }
-  return Array.isArray(r.data)&&r.data.length>0;
-}
-async function showAdmin(user){
-  try{
-    if(!(await isAdmin(user))){
-      await neon.neon.auth.signOut();
-      $("loginView").classList.remove("hidden");
-      $("adminView").classList.add("hidden");
-      message("loginMsg","Esta conta não está autorizada a administrar o Portfolio.");
-      return;
-    }
-    $("loginView").classList.add("hidden");
-    $("adminView").classList.remove("hidden");
-    $("userLabel").textContent="Conectado como "+(user?.email||"administrador");
-    try{await load()}catch(e){console.error("Erro ao carregar o painel:",e);message("saveMsg","Erro ao carregar os dados do Portfolio: "+(e.message||"erro desconhecido"))}
-  }catch(e){
-    $("loginView").classList.remove("hidden");
-    $("adminView").classList.add("hidden");
-    message("loginMsg",e.message||"Não foi possível verificar o acesso administrativo.");
-  }
-}
 </script></body></html>
