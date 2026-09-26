@@ -43,7 +43,7 @@ function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&l
 function safeUrl(url){try{const u=new URL(url);return ["http:","https:"].includes(u.protocol)?u.href:""}catch{return ""}}
 function applyTexts(s){if(!s)return;const set=(id,v)=>{if(v!==null&&v!==undefined&&v!=="")document.getElementById(id).innerHTML=esc(v)};set("heroEyebrow",s.hero_eyebrow);set("heroAccent",s.hero_accent);set("heroIntro",s.hero_intro);set("projectsTitle",s.projects_title);set("aboutTitle",s.about_title);set("aboutText",s.about_text);set("footerStatus",s.footer_status);if(s.hero_title){const title=document.getElementById("heroTitle"),accent=document.getElementById("heroAccent");title.innerHTML=esc(s.hero_title).replace(/\\n/g,"<br>")+" ";if(accent){title.appendChild(accent);}} }
 function imageHtml(data,alt){return data?'<div class="project-image-wrap"><img class="project-image" src="'+esc(data)+'" alt="'+esc(alt)+'" loading="lazy"></div>':'<div class="project-image-wrap"><div class="project-placeholder">Adicione uma imagem</div></div>'}
-function renderProfile(data){const src=data||"";document.getElementById("profile").innerHTML=src?'<img class="profile-photo" src="'+esc(src)+'" alt="Leonardo Ribeiro">':'<div class="profile-placeholder">Adicione sua foto na área restrita</div>';document.getElementById("about-photo").innerHTML=src?'<img class="about-photo" src="'+esc(src)+'" alt="Leonardo Ribeiro" loading="lazy">':'<div class="about-placeholder">Sua foto pode aparecer aqui</div>'}
+function renderProfile(data,aboutData){const src=data||"",aboutSrc=aboutData||"";document.getElementById("profile").innerHTML=src?'<img class="profile-photo" src="'+esc(src)+'" alt="Leonardo Ribeiro">':'<div class="profile-placeholder">Adicione sua foto na área restrita</div>';document.getElementById("about-photo").innerHTML=aboutSrc?'<img class="about-photo" src="'+esc(aboutSrc)+'" alt="Leonardo Ribeiro" loading="lazy">':'<div class="about-placeholder">Adicione uma foto inferior na área restrita</div>'}
 async function load(){
  const el=document.getElementById("projects");
  try{
@@ -62,9 +62,10 @@ async function load(){
   const r=await githubPromise;
   if(!r.ok)throw new Error("GitHub indisponível");
   const repos=(await r.json()).filter(x=>!excluded.includes(x.name)&&!x.fork&&!x.archived);
-  const map=new Map(portfolioRows.filter(x=>x.repo_name!=="__portfolio_texts__").map(x=>[x.repo_name,x]));
+  const map=new Map(portfolioRows.filter(x=>x.repo_name!=="__portfolio_texts__"&&x.repo_name!=="__about_photo__").map(x=>[x.repo_name,x]));
   document.getElementById("count").textContent=repos.length+(repos.length===1?" projeto":" projetos");
-  renderProfile(settings?.profile_image_data||"");
+  const aboutPhotoRow=portfolioRows.find(x=>x.repo_name==="__about_photo__");
+  renderProfile(settings?.profile_image_data||"",aboutPhotoRow?.image_data||"");
   el.innerHTML=repos.map((r,i)=>{
    const x=map.get(r.name)||{},title=x.title||labels[r.name]||r.name.replaceAll("_"," ");
    return '<a class="project" href="'+projectUrl(r.name)+'" target="_blank" rel="noopener" aria-label="Abrir projeto '+esc(title)+'">'+imageHtml(x.image_data,"Imagem do projeto "+title)+'<div class="number">'+String(i+1).padStart(2,"0")+'</div><h3>'+esc(title)+'</h3><p>'+esc(descriptions[r.name]||r.description||"Projeto desenvolvido por Leonardo Ribeiro.")+'</p></a>'
@@ -73,7 +74,7 @@ async function load(){
   console.error(e);
   document.getElementById("count").textContent="";
   el.innerHTML='<div class="error">Não foi possível carregar os projetos agora. <a href="https://github.com/leorbr27" target="_blank" rel="noopener">Ver GitHub ↗</a></div>';
-  renderProfile("");
+  renderProfile("","");
  }
 }
 document.getElementById("year").textContent=new Date().getFullYear();load();
