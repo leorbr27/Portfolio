@@ -25,19 +25,20 @@ self.addEventListener("fetch", event => {
 
   // Serve the last cached page immediately while refreshing it in the background.
   if (request.mode === "navigate") {
+    const refresh = caches.open(CACHE_NAME).then(cache =>
+      fetch(request).then(response => {
+        if (response.ok) cache.put(request, response.clone());
+        return response;
+      })
+    );
+    event.waitUntil(refresh.then(() => undefined).catch(() => undefined));
     event.respondWith((async () => {
       const cache = await caches.open(CACHE_NAME);
       const cached = (await cache.match(request)) || (await cache.match(APP_ROOT + "index.html"));
-      const refresh = fetch(request).then(response => {
-        if (response.ok) cache.put(request, response.clone());
-        return response;
-      });
-      event.waitUntil(refresh.then(() => undefined).catch(() => undefined));
       return cached || (await refresh).clone();
     })());
     return;
   }
-
   // Stale-while-revalidate for same-origin static assets.
   event.respondWith((async () => {
     const cache = await caches.open(CACHE_NAME);
