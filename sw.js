@@ -23,17 +23,17 @@ self.addEventListener("fetch", event => {
   const url = new URL(request.url);
   if (request.method !== "GET" || url.origin !== self.location.origin) return;
 
-  // Network-first for navigation: use fresh HTML when available, cached HTML offline.
+  // Serve the last cached page immediately while refreshing it in the background.
   if (request.mode === "navigate") {
     event.respondWith((async () => {
       const cache = await caches.open(CACHE_NAME);
-      try {
-        const response = await fetch(request);
-        if (response.ok) await cache.put(request, response.clone());
+      const cached = (await cache.match(request)) || (await cache.match(APP_ROOT + "index.html"));
+      const refresh = fetch(request).then(response => {
+        if (response.ok) cache.put(request, response.clone());
         return response;
-      } catch {
-        return (await cache.match(request)) || (await cache.match(APP_ROOT + "index.html")) || Response.error();
-      }
+      });
+      event.waitUntil(refresh.then(() => undefined).catch(() => undefined));
+      return cached || (await refresh).clone();
     })());
     return;
   }
