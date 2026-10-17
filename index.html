@@ -55,8 +55,17 @@ async function load(){
  try{
   const githubPromise=fetch("https://api.github.com/users/"+user+"/repos?per_page=100&sort=updated");
   let settings=null, portfolioRows=[];
-  // Neon is optional for the public page: if the database is not provisioned yet,
-  // the portfolio still renders from GitHub using the legacy/default labels.
+  // Prioritize the public GitHub list so a slow database cannot delay project rendering.
+  const r=await githubPromise;
+  if(!r.ok)throw new Error("GitHub indisponível");
+  const repos=(await r.json()).filter(x=>!excluded.includes(x.name)&&!x.fork&&!x.archived);
+  document.getElementById("count").textContent=repos.length+(repos.length===1?" projeto":" projetos");
+  el.innerHTML=repos.map((repo,i)=>{
+   const title=labels[repo.name]||repo.name.replaceAll("_"," ");
+   return '<a class="project" href="'+projectUrl(repo.name)+'" target="_blank" rel="noopener" aria-label="Abrir projeto '+esc(title)+'">'+imageHtml("","Imagem do projeto "+title)+'<div class="number">'+String(i+1).padStart(2,"0")+'</div><h3>'+esc(title)+'</h3><p>'+esc(descriptions[repo.name]||repo.description||"Projeto desenvolvido por Leonardo Ribeiro.")+'</p></a>'
+  }).join("");
+  try{localStorage.setItem(CACHE_KEY,document.querySelector(".wrap").innerHTML)}catch(cacheError){console.warn("Não foi possível atualizar o cache local.",cacheError)}
+  // Load optional admin customizations after the initial project list is visible.
   try{
    const [s,p]=await Promise.all([
     neon.from("portfolio_settings").select("profile_image_data,hero_eyebrow,hero_title,hero_accent,hero_intro,projects_title,about_title,about_text,footer_status").eq("id",true).maybeSingle(),
@@ -64,8 +73,7 @@ async function load(){
    ]);
    if(!s.error) { settings=s.data; applyTexts(settings); }
    if(!p.error) portfolioRows=p.data||[];
-  }catch(neonError){console.warn("Dados administrativos do Neon indisponíveis; usando dados públicos do GitHub.",neonError)}
-  const r=await githubPromise;
+  }catch(neonError){console.warn("Dados administrativos do Neon indisponíveis; mantendo os dados públicos do GitHub.",neonError)}
   if(!r.ok)throw new Error("GitHub indisponível");
   const repos=(await r.json()).filter(x=>!excluded.includes(x.name)&&!x.fork&&!x.archived);
   const projectRows=portfolioRows.filter(x=>x.repo_name!=="__portfolio_texts__"&&x.repo_name!=="__about_photo__");
