@@ -74,8 +74,6 @@ async function load(){
    if(!s.error) { settings=s.data; applyTexts(settings); }
    if(!p.error) portfolioRows=p.data||[];
   }catch(neonError){console.warn("Dados administrativos do Neon indisponíveis; mantendo os dados públicos do GitHub.",neonError)}
-  if(!r.ok)throw new Error("GitHub indisponível");
-  const repos=(await r.json()).filter(x=>!excluded.includes(x.name)&&!x.fork&&!x.archived);
   const projectRows=portfolioRows.filter(x=>x.repo_name!=="__portfolio_texts__"&&x.repo_name!=="__about_photo__");
   const mapById=new Map(projectRows.filter(x=>x.repo_id!==null&&x.repo_id!==undefined).map(x=>[String(x.repo_id),x]));
   const mapByName=new Map(projectRows.map(x=>[x.repo_name,x]));
